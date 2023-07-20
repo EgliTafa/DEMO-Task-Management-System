@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using DEMO_Task_Management_System.Data.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace DEMO_Task_Management_System.Dto
 {
@@ -19,6 +20,6 @@ namespace DEMO_Task_Management_System.Dto
         public string Password { get; set; }
 
         [Required]
-        public string Role { get; set; }
+        public Roles Role { get; set; }
     }
 }

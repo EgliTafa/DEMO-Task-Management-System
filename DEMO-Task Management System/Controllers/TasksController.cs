@@ -1,4 +1,6 @@
 ﻿using DEMO_Task_Management_System.Data;
+using DEMO_Task_Management_System.Data.Interfaces;
+using DEMO_Task_Management_System.Dto;
 using DEMO_Task_Management_System.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,10 +15,12 @@ namespace DEMO_Task_Management_System.Controllers
     public class TasksController : Controller
     {
         private readonly ITasksRepository _tasksRepository;
+        private readonly IProjectRepository _projectRepository;
 
-        public TasksController(ITasksRepository tasksRepository)
+        public TasksController(ITasksRepository tasksRepository, IProjectRepository projectRepository)
         {
             _tasksRepository = tasksRepository;
+            _projectRepository = projectRepository;
         }
 
         [HttpGet]
@@ -40,6 +44,35 @@ namespace DEMO_Task_Management_System.Controllers
             return NotFound();
         }
 
+        [HttpGet]
+        [Route("Category/{category}")]
+        public async Task<IActionResult> GetTasksByCategory(string category)
+        {
+            try
+            {
+                var tasks = await _tasksRepository.GetTasksByCategory(category);
+                return Ok(tasks);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An error occurred while fetching tasks by category.");
+            }
+        }
+
+        [HttpGet]
+        [Route("Search")]
+        public async Task<IActionResult> SearchTasks([FromQuery] string category)
+        {
+            if (string.IsNullOrWhiteSpace(category))
+            {
+                return BadRequest("Category cannot be empty.");
+            }
+
+            var tasks = await _tasksRepository.GetTasksByCategory(category);
+            return Ok(tasks);
+        }
+
+
         [HttpPost]
         public async Task<IActionResult> AddTasks(Tasks model)
         {
@@ -49,24 +82,42 @@ namespace DEMO_Task_Management_System.Controllers
 
         [HttpPut]
         [Route("{id}")]
-        public async Task<IActionResult> UpdateTask(Tasks model, [FromRoute] int id)
+        public async Task<IActionResult> UpdateTask(int id, TaskUpdateDto taskUpdateDto)
         {
             var task = await _tasksRepository.GetTaskById(id);
-
-            if (task != null)
+            if (task == null)
             {
-                task.Title = model.Title;
-                task.Description = model.Description;
-                task.DueDate = model.DueDate;
-                task.IsCompleted = model.IsCompleted;
-                task.Priority = model.Priority;
-
-                await _tasksRepository.UpdateTask(task);
-
-                return Ok(task);
+                return NotFound($"Task not found with ID: {id}");
             }
 
-            return NotFound();
+            // Update the task properties from the DTO
+            task.Title = taskUpdateDto.Title;
+            task.Description = taskUpdateDto.Description;
+            task.DueDate = taskUpdateDto.DueDate;
+            task.Priority = taskUpdateDto.Priority;
+            task.IsCompleted = taskUpdateDto.IsCompleted;
+            task.Category = taskUpdateDto.Category;
+
+            if (taskUpdateDto.ProjectId.HasValue)
+            {
+                var project = await _projectRepository.GetProjectById(taskUpdateDto.ProjectId.Value);
+                if (project == null)
+                {
+                    return NotFound($"Project not found with ID: {taskUpdateDto.ProjectId.Value}");
+                }
+
+                // Assign the task to the specified project
+                await _tasksRepository.AssignTaskToProject(id, taskUpdateDto.ProjectId.Value);
+            }
+            else
+            {
+                // If the user wants to remove the assignment, set the ProjectId to null
+                task.ProjectId = null;
+            }
+
+            await _tasksRepository.UpdateTask(task);
+
+            return Ok(task);
         }
 
         [HttpDelete]
@@ -83,8 +134,25 @@ namespace DEMO_Task_Management_System.Controllers
 
             return NotFound();
         }
+        //Get tasks by users
+        [HttpGet]
+        [Route("AssignedUsers")]
+        public async Task<IActionResult> GetTasksByAssignedUsers([FromHeader] List<string> usernames)
+        {
+            try
+            {
+                var tasks = await _tasksRepository.GetTasksByAssignedUsers(usernames);
+                return Ok(tasks);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        //Assign tasks to users
         [HttpPost]
-        [Route("{taskId}/assign/")]
+        [Route("{taskId}/Assign/")]
         public async Task<IActionResult> AssignTask(int taskId, [FromHeader] List<string> usernames)
         {
             try
@@ -97,6 +165,51 @@ namespace DEMO_Task_Management_System.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        //Update the users on a task
+        [HttpPut]
+        [Route("{taskId}/Assign/Update")]
+        public async Task<IActionResult> UpdateAssignTask(int taskId, [FromHeader] List<string> usernames)
+        {
+            try
+            {
+                await _tasksRepository.UpdateAssignTask(taskId, usernames);
+                return Ok();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
+
+        //Assign tasks to projects
+        [HttpPost]
+        [Route("{taskId}/Assign/{projectId}")]
+        public async Task<IActionResult> AssignTaskToProject(int taskId, int projectId)
+        {
+            try
+            {
+                await _tasksRepository.AssignTaskToProject(taskId, projectId);
+                return Ok();
+            }
+            catch (ArgumentException ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("byproject/{projectId}")]
+        public async Task<IActionResult> GetTasksByProject(int projectId)
+        {
+            var project = await _projectRepository.GetProjectById(projectId);
+            if (project == null)
+            {
+                return NotFound($"Project not found with ID: {projectId}");
+            }
+
+            var tasks = await _tasksRepository.GetTasksByProject(projectId);
+            return Ok(tasks);
+        }
     }
 }

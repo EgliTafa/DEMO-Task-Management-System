@@ -16,5 +16,10 @@ namespace DEMO_Task_Management_System.Models
         public string? UserId { get; set; }
         [JsonIgnore]
         public User? User { get; set; }
+        // Foreign key for the associated project
+        [JsonIgnore]
+        public int? ProjectId { get; set; }
+        [JsonIgnore]
+        public Project? Project { get; set; }
     }
 }

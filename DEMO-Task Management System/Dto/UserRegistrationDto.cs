@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace DEMO_Task_Management_System.Models
+namespace DEMO_Task_Management_System.Dto
 {
     public class UserRegistrationDto
     {

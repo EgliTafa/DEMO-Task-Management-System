@@ -4,6 +4,7 @@ using DEMO_Task_Management_System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DEMO_Task_Management_System.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230719114420_Project Table")]
+    partial class ProjectTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -93,9 +96,6 @@ namespace DEMO_Task_Management_System.Migrations
                     b.Property<int>("Priority")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ProjectId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Title")
                         .HasColumnType("nvarchar(max)");
 
@@ -103,8 +103,6 @@ namespace DEMO_Task_Management_System.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ProjectId");
 
                     b.HasIndex("UserId");
 
@@ -341,15 +339,9 @@ namespace DEMO_Task_Management_System.Migrations
 
             modelBuilder.Entity("DEMO_Task_Management_System.Models.Tasks", b =>
                 {
-                    b.HasOne("DEMO_Task_Management_System.Models.Project", "Project")
-                        .WithMany()
-                        .HasForeignKey("ProjectId");
-
                     b.HasOne("DEMO_Task_Management_System.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId");
-
-                    b.Navigation("Project");
 
                     b.Navigation("User");
                 });

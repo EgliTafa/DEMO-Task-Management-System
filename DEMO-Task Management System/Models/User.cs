@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using DEMO_Task_Management_System.Data.Enums;
+using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 
 namespace DEMO_Task_Management_System.Models
@@ -9,7 +10,6 @@ namespace DEMO_Task_Management_System.Models
         public string? FirstName { get; set; }
         [MaxLength(60)]
         public string? LastName { get; set; }
-
-        public string? Role { get; set; }
+        public Roles Role { get; set; }
     }
 }

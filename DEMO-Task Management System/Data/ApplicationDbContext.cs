@@ -15,6 +15,7 @@ namespace DEMO_Task_Management_System.Data
         public DbSet<User> User { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<TaskAssignment> TaskAssignments { get; set; }
+        public DbSet<Team> Teams { get; set; }
 
     }
 }

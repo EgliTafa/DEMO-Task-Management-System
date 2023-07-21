@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿using DEMO_Task_Management_System.Data.Enums;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
+using System.Text.Json.Serialization;
 
 namespace DEMO_Task_Management_System.Models
 {
@@ -11,6 +13,8 @@ namespace DEMO_Task_Management_System.Models
         public string? Category { get; set; }
         public DateTime DueDate { get; set; }
         public int Priority { get; set; }
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public TaskStatusList TaskStatus { get; set; } = TaskStatusList.NotStarted;
         public bool IsCompleted { get; set; } = false;
         [JsonIgnore] 
         public string? UserId { get; set; }
@@ -21,5 +25,6 @@ namespace DEMO_Task_Management_System.Models
         public int? ProjectId { get; set; }
         [JsonIgnore]
         public Project? Project { get; set; }
+
     }
 }

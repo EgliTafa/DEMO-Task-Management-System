@@ -73,19 +73,36 @@ namespace DEMO_Task_Management_System.Data
             {
                 throw new ArgumentException($"Task not found with ID: {taskId}");
             }
-            
-            foreach (var username in usernames)
-            {
-                var assignedUser = await _userManager.FindByNameAsync(username);
-                if (assignedUser == null)
-                {
-                    throw new ArgumentException($"Invalid username specified: {username}");
-                }
 
+            var user = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+
+            // Check if the user is associated with a team
+            if (user.TeamId == null)
+            {
+                throw new InvalidOperationException("User must be associated with a team to assign tasks.");
+            }
+
+            // Get the team members associated with the user's team
+            var teamMembers = await _context.Users
+                .Where(u => u.TeamId == user.TeamId && usernames.Contains(u.UserName))
+                .ToListAsync();
+
+            if (teamMembers.Count != usernames.Count)
+            {
+                // Some of the specified usernames are not team members
+                throw new ArgumentException("Some of the specified usernames are not team members.");
+            }
+
+            // Clear existing task assignments for the task
+            var existingAssignments = _context.TaskAssignments.Where(ta => ta.TaskId == taskId).ToList();
+            _context.TaskAssignments.RemoveRange(existingAssignments);
+
+            foreach (var teamMember in teamMembers)
+            {
                 var taskAssignment = new TaskAssignment
                 {
                     Task = task,
-                    User = assignedUser
+                    User = teamMember
                 };
 
                 _context.TaskAssignments.Add(taskAssignment);
@@ -102,65 +119,59 @@ namespace DEMO_Task_Management_System.Data
                 throw new ArgumentException($"Task not found with ID: {taskId}");
             }
 
+            var user = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
+
+            // Check if the user is associated with a team
+            if (user.TeamId == null)
+            {
+                throw new InvalidOperationException("User must be associated with a team to assign tasks.");
+            }
+
+            // Get the team members associated with the user's team
+            var teamMembers = await _context.Users
+                .Where(u => u.TeamId == user.TeamId && usernames.Contains(u.UserName))
+                .ToListAsync();
+
+            if (teamMembers.Count != usernames.Count)
+            {
+                // Some of the specified usernames are not team members
+                throw new ArgumentException("Some of the specified usernames are not team members.");
+            }
+
             // Get the existing task assignments for the task
             var existingAssignments = _context.TaskAssignments.Where(ta => ta.TaskId == taskId).ToList();
 
-            if (existingAssignments == null)
+            foreach (var teamMember in teamMembers)
             {
-                // If there are no existing assignments, create new assignments for all provided usernames
-                foreach (var username in usernames)
-                {
-                    var assignedUser = await _userManager.FindByNameAsync(username);
-                    if (assignedUser == null)
-                    {
-                        throw new ArgumentException($"Invalid username specified: {username}");
-                    }
+                // Check if the user is already assigned to the task
+                var existingAssignment = existingAssignments.FirstOrDefault(ta => ta.UserId == teamMember.Id);
 
+                if (existingAssignment == null)
+                {
+                    // If the user is not already assigned, create a new assignment
                     var taskAssignment = new TaskAssignment
                     {
                         Task = task,
-                        User = assignedUser
+                        User = teamMember
                     };
 
                     _context.TaskAssignments.Add(taskAssignment);
                 }
-            }
-            else
-            {
-
-                foreach (var username in usernames)
+                else
                 {
-                    var assignedUser = await _userManager.FindByNameAsync(username);
-                    if (assignedUser == null)
-                    {
-                        throw new ArgumentException($"Invalid username specified: {username}");
-                    }
-
-                    // Check if the user is already assigned to the task
-                    var existingAssignment = existingAssignments.FirstOrDefault(ta => ta.UserId == assignedUser.Id);
-
-                    if (existingAssignment == null)
-                    {
-                        // If the user is not already assigned, create a new assignment
-                        var taskAssignment = new TaskAssignment
-                        {
-                            Task = task,
-                            User = assignedUser
-                        };
-
-                        _context.TaskAssignments.Add(taskAssignment);
-                    }
-                    else
-                    {
-                        // If the user is already assigned, update the existing assignment
-                        existingAssignment.User = assignedUser;
-                        _context.TaskAssignments.Update(existingAssignment);
-                    }
+                    // If the user is already assigned, update the existing assignment
+                    existingAssignment.User = teamMember;
+                    _context.TaskAssignments.Update(existingAssignment);
                 }
             }
 
+            // Remove task assignments for team members who are no longer specified
+            var removedAssignments = existingAssignments.Where(ta => !teamMembers.Any(tm => tm.Id == ta.UserId));
+            _context.TaskAssignments.RemoveRange(removedAssignments);
+
             await _context.SaveChangesAsync();
         }
+
 
         public async Task<IEnumerable<TaskAssignment>> GetTasksByAssignedUsers(List<string> usernames)
         {

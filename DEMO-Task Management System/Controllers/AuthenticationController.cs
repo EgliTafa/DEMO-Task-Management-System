@@ -43,7 +43,8 @@ public class AuthenticationController : ControllerBase
             UserName = model.Username,
             FirstName = model.FirstName,
             LastName = model.LastName,
-            Role = model.Role // model.Role should be of type Roles enum
+            Role = model.Role,
+            Email = model.Email
         };
 
         var result = await _userManager.CreateAsync(user, model.Password);
@@ -53,9 +54,25 @@ public class AuthenticationController : ControllerBase
             return BadRequest(result.Errors);
         }
 
+        // Check if the role exists, and create it if it doesn't
+        if (!string.IsNullOrEmpty(model.Role))
+        {
+            var roleExists = await _roleManager.RoleExistsAsync(model.Role);
+            if (!roleExists)
+            {
+                await _roleManager.CreateAsync(new IdentityRole(model.Role));
+            }
+
+            var roleResult = await _userManager.AddToRoleAsync(user, model.Role);
+            if (!roleResult.Succeeded)
+            {
+                // Handle error if role assignment fails
+                return BadRequest(roleResult.Errors);
+            }
+        }
+
         return Ok();
     }
-
 
 
 
@@ -104,7 +121,7 @@ public class AuthenticationController : ControllerBase
                 new Claim(ClaimTypes.Name, user.UserName),
                 new Claim(ClaimTypes.GivenName, user.FirstName),
                 new Claim(ClaimTypes.Surname, user.LastName),
-                new Claim(ClaimTypes.Role, user.Role.ToString())
+                new Claim(ClaimTypes.Role, user.Role)
             }),
             Expires = DateTime.UtcNow.AddDays(7),
             Issuer = issuer,

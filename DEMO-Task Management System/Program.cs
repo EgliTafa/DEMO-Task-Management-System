@@ -1,6 +1,7 @@
 using DEMO_Task_Management_System.Data;
 using DEMO_Task_Management_System.Data.Interfaces;
 using DEMO_Task_Management_System.Data.Repositories;
+using DEMO_Task_Management_System.Data.Services;
 using DEMO_Task_Management_System.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -51,6 +52,9 @@ builder.Services.AddSwaggerGen(x =>
 });
 builder.Services.AddScoped<ITasksRepository, TasksRepository>();
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
+builder.Services.AddScoped<ITeamRepository, TeamRepository>();
+
+builder.Services.AddTransient<IEmailService, EmailService>();
 
 builder.Services.AddIdentity<User, IdentityRole>()
         .AddEntityFrameworkStores<ApplicationDbContext>()

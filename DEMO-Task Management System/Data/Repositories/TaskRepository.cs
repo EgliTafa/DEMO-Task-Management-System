@@ -247,22 +247,5 @@ namespace DEMO_Task_Management_System.Data
 
             return upcomingTasks;
         }
-
-
-        //public async Task SendTaskReminderNotifications(TimeSpan threshold)
-        //{
-        //    // Get tasks with upcoming deadlines based on the threshold
-        //    var upcomingTasks = await GetTasksWithUpcomingDeadlines(threshold);
-
-        //    // Send reminder notifications for each upcoming task
-        //    foreach (var task in upcomingTasks)
-        //    {
-        //        var assignedUser = task.User;
-        //        if (assignedUser != null)
-        //        {
-        //            await _emailService.SendTaskReminderNotificationAsync(assignedUser.Email, assignedUser.UserName, task.Id.ToString(), task.Title, task.DueDate);
-        //        }
-        //    }
-        //}
     }
 }

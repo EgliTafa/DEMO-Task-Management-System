@@ -11,11 +11,19 @@ namespace DEMO_Task_Management_System.Data
             Database.EnsureCreated();
         }
 
+        // DbSet for the Tasks table, which represents the tasks in the system
         public DbSet<Tasks> Tasks { get; set; }
-        public DbSet<User> User { get; set; }
-        public DbSet<Project> Projects { get; set; }
-        public DbSet<TaskAssignment> TaskAssignments { get; set; }
-        public DbSet<Team> Teams { get; set; }
 
+        // DbSet for the User table, which represents the application users
+        public DbSet<User> User { get; set; }
+
+        // DbSet for the Projects table, which represents the projects in the system
+        public DbSet<Project> Projects { get; set; }
+
+        // DbSet for the TaskAssignments table, which represents task assignments to users
+        public DbSet<TaskAssignment> TaskAssignments { get; set; }
+
+        // DbSet for the Teams table, which represents teams in the system
+        public DbSet<Team> Teams { get; set; }
     }
 }

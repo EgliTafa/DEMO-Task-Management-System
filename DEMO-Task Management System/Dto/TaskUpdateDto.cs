@@ -6,6 +6,8 @@ namespace DEMO_Task_Management_System.Dto
 {
     public class TaskUpdateDto
     {
+        // The properties represent the updated information for a task.
+
         public string Title { get; set; }
         public string Description { get; set; }
         public DateTime DueDate { get; set; }

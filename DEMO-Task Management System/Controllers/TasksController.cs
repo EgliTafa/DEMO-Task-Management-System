@@ -31,70 +31,92 @@ namespace DEMO_Task_Management_System.Controllers
             _teamRepository = teamRepository;
         }
 
+        // GET: api/Tasks
         [HttpGet]
         public async Task<IActionResult> GetAllTasks()
         {
+            // Retrieve all tasks from the repository
             var tasks = await _tasksRepository.GetAllTasks();
+
+            // Return the tasks as a response
             return Ok(tasks);
         }
 
+        // GET: api/Tasks/5
         [HttpGet]
         [Route("{id}")]
         public async Task<IActionResult> GetSingleTask([FromRoute] int id)
         {
+            // Retrieve a specific task by its ID from the repository
             var task = await _tasksRepository.GetTaskById(id);
 
             if (task != null)
             {
+                // Return the task as a response if found
                 return Ok(task);
             }
 
+            // Return 404 Not Found if the task with the given ID is not found
             return NotFound();
         }
 
+        // GET: api/Tasks/Category/CategoryName
         [HttpGet]
         [Route("Category/{category}")]
         public async Task<IActionResult> GetTasksByCategory(string category)
         {
             try
             {
+                // Retrieve tasks by their category from the repository
                 var tasks = await _tasksRepository.GetTasksByCategory(category);
                 return Ok(tasks);
             }
             catch (Exception ex)
             {
+                // Handle exceptions and return 500 Internal Server Error with a message
                 return StatusCode(500, "An error occurred while fetching tasks by category.");
             }
         }
 
+        // GET: api/Tasks/Search?category=CategoryName
         [HttpGet]
         [Route("Search")]
         public async Task<IActionResult> SearchTasks([FromQuery] string category)
         {
             if (string.IsNullOrWhiteSpace(category))
             {
+                // Return 400 Bad Request if the category parameter is empty or null
                 return BadRequest("Category cannot be empty.");
             }
 
+            // Retrieve tasks by their category from the repository
             var tasks = await _tasksRepository.GetTasksByCategory(category);
+
+            // Return the tasks as a response
             return Ok(tasks);
         }
 
-
+        // POST: api/Tasks
         [HttpPost]
         public async Task<IActionResult> AddTasks(Tasks model)
         {
+            // Add the new task to the repository
             await _tasksRepository.AddTask(model);
+
+            // Return the new task in the response body
             return Ok(model);
         }
 
+        // PUT: api/Tasks/5
         [HttpPut]
         [Route("{id}")]
         public async Task<IActionResult> UpdateTask(int id, TaskUpdateDto taskUpdateDto)
         {
+            // Retrieve the task with the given ID from the repository
             var task = await _tasksRepository.GetTaskById(id);
             if (task == null)
             {
+                // Return 404 Not Found if the task with the given ID is not found
                 return NotFound($"Task not found with ID: {id}");
             }
 
@@ -110,9 +132,11 @@ namespace DEMO_Task_Management_System.Controllers
 
             if (taskUpdateDto.ProjectId.HasValue)
             {
+                // Retrieve the project with the specified ID from the repository
                 var project = await _projectRepository.GetProjectById(taskUpdateDto.ProjectId.Value);
                 if (project == null)
                 {
+                    // Return 404 Not Found if the project with the specified ID is not found
                     return NotFound($"Project not found with ID: {taskUpdateDto.ProjectId.Value}");
                 }
 
@@ -128,6 +152,7 @@ namespace DEMO_Task_Management_System.Controllers
             // Task update notification
             if (task == null)
             {
+                // Return 404 Not Found if the task with the given ID is not found (redundant check)
                 return NotFound($"Task not found with ID: {id}");
             }
 
@@ -157,118 +182,146 @@ namespace DEMO_Task_Management_System.Controllers
                 await _emailService.SendTaskUpdateNotificationAsync(teamMember.Email, teamMember.UserName, task.Id.ToString(), task.Title, task.TaskStatus.ToString());
             }
 
+            // Update the task in the repository
             await _tasksRepository.UpdateTask(task);
 
+            // Return the updated task in the response body
             return Ok(task);
         }
 
-
+        // DELETE: api/Tasks/5
         [HttpDelete]
         [Route("{id}")]
         public async Task<IActionResult> DeleteTasks([FromRoute] int id)
         {
+            // Retrieve the task with the given ID from the repository
             var task = await _tasksRepository.GetTaskById(id);
 
             if (task != null)
             {
+                // Delete the task from the repository
                 await _tasksRepository.DeleteTask(id);
+
+                // Return the deleted task in the response body
                 return Ok(task);
             }
 
+            // Return 404 Not Found if the task with the given ID is not found
             return NotFound();
         }
-        //Get tasks by users
+
+        // GET: api/Tasks/AssignedUsers
         [HttpGet]
         [Route("AssignedUsers")]
         public async Task<IActionResult> GetTasksByAssignedUsers([FromHeader] List<string> usernames)
         {
             try
             {
+                // Retrieve tasks by their assigned users from the repository
                 var tasks = await _tasksRepository.GetTasksByAssignedUsers(usernames);
                 return Ok(tasks);
             }
             catch (Exception ex)
             {
+                // Handle exceptions and return 400 Bad Request with the exception message
                 return BadRequest(ex.Message);
             }
         }
 
-        //Assign tasks to users
+        // POST: api/Tasks/1/Assign/
         [HttpPost]
         [Route("{taskId}/Assign/")]
         public async Task<IActionResult> AssignTask(int taskId, [FromHeader] List<string> usernames)
         {
             try
             {
+                // Assign the task to the specified users
                 await _tasksRepository.AssignTask(taskId, usernames);
                 return Ok();
             }
             catch (ArgumentException ex)
             {
+                // Handle ArgumentException and return 400 Bad Request with the exception message
                 return BadRequest(ex.Message);
             }
         }
-        //Update the users on a task
+
+        // PUT: api/Tasks/1/Assign/Update
         [HttpPut]
         [Route("{taskId}/Assign/Update")]
         public async Task<IActionResult> UpdateAssignTask(int taskId, [FromHeader] List<string> usernames)
         {
             try
             {
+                // Update the assigned users for the specified task
                 await _tasksRepository.UpdateAssignTask(taskId, usernames);
                 return Ok();
             }
             catch (ArgumentException ex)
             {
+                // Handle ArgumentException and return 400 Bad Request with the exception message
                 return BadRequest(ex.Message);
             }
         }
 
-
-        //Assign tasks to projects
+        // POST: api/Tasks/1/Assign/2
         [HttpPost]
         [Route("{taskId}/Assign/{projectId}")]
         public async Task<IActionResult> AssignTaskToProject(int taskId, int projectId)
         {
             try
             {
+                // Assign the task to the specified project
                 await _tasksRepository.AssignTaskToProject(taskId, projectId);
                 return Ok();
             }
             catch (ArgumentException ex)
             {
+                // Handle ArgumentException and return 404 Not Found with the exception message
                 return NotFound(ex.Message);
             }
         }
 
+        // GET: api/Tasks/byproject/1
         [HttpGet]
         [Route("byproject/{projectId}")]
         public async Task<IActionResult> GetTasksByProject(int projectId)
         {
+            // Retrieve the project with the specified ID from the repository
             var project = await _projectRepository.GetProjectById(projectId);
             if (project == null)
             {
+                // Return 404 Not Found if the project with the given ID is not found
                 return NotFound($"Project not found with ID: {projectId}");
             }
 
+            // Retrieve tasks by their project ID from the repository
             var tasks = await _tasksRepository.GetTasksByProject(projectId);
+
+            // Return the tasks as a response
             return Ok(tasks);
         }
 
+        // POST: api/Tasks/Get-Upcoming-Tasks
         [HttpPost]
         [Route("Get-Upcoming-Tasks")]
         public async Task<IActionResult> GetTasksWithUpcomingDeadlines(int days)
         {
             if (days <= 0)
             {
+                // Return 400 Bad Request if the 'days' parameter is less than or equal to zero
                 return BadRequest("The 'days' parameter must be greater than zero.");
             }
 
-            var threshold = new TimeSpan(days, 0, 0, 0); // Create a TimeSpan based on the specified days
+            // Create a TimeSpan based on the specified days
+            var threshold = new TimeSpan(days, 0, 0, 0);
 
+            // Retrieve tasks with upcoming deadlines from the repository based on the threshold
             var upcomingTasks = await _tasksRepository.GetTasksWithUpcomingDeadlines(threshold);
 
+            // Return the upcoming tasks as a response
             return Ok(upcomingTasks);
         }
     }
+
 }

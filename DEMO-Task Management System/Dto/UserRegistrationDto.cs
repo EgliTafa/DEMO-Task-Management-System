@@ -4,6 +4,8 @@ namespace DEMO_Task_Management_System.Dto
 {
     public class UserRegistrationDto
     {
+        // The username provided by the user during registration.
+
         [Required]
         [MaxLength(20)]
         public string Username { get; set; }

@@ -12,153 +12,158 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
-[Route("api/[controller]")]
-[ApiController]
-public class AuthenticationController : ControllerBase
+namespace DEMO_Task_Management_System.Controllers
 {
-    private readonly UserManager<User> _userManager;
-    private readonly SignInManager<User> _signInManager;
-    private readonly RoleManager<IdentityRole> _roleManager;
-    private readonly IConfiguration _configuration;
+    [Route("api/[controller]")]
+    [ApiController]
 
-    public AuthenticationController(UserManager<User> userManager, SignInManager<User> signInManager, IConfiguration configuration, RoleManager<IdentityRole> roleManager)
+    public class AuthenticationController : ControllerBase
     {
-        _userManager = userManager;
-        _signInManager = signInManager;
-        _configuration = configuration;
-        _roleManager = roleManager;
-    }
+        private readonly UserManager<User> _userManager;
+        private readonly SignInManager<User> _signInManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IConfiguration _configuration;
 
-    /// <summary>
-    /// Registers a new user.
-    /// </summary>
-    /// <param name="model">User registration data.</param>
-    /// <returns>HTTP status code indicating success or failure.</returns>
-    [AllowAnonymous]
-    [HttpPost("Register")]
-    public async Task<IActionResult> Register([FromBody] UserRegistrationDto model)
-    {
-        if (!ModelState.IsValid)
+        public AuthenticationController(UserManager<User> userManager, SignInManager<User> signInManager, IConfiguration configuration, RoleManager<IdentityRole> roleManager)
         {
-            return BadRequest(ModelState);
+            _userManager = userManager;
+            _signInManager = signInManager;
+            _configuration = configuration;
+            _roleManager = roleManager;
         }
 
-        var user = new User
+        // Endpoint for user registration
+        [AllowAnonymous]
+        [HttpPost("Register")]
+        public async Task<IActionResult> Register([FromBody] UserRegistrationDto model)
         {
-            UserName = model.Username,
-            FirstName = model.FirstName,
-            LastName = model.LastName,
-            Role = model.Role,
-            Email = model.Email
-        };
-
-        var result = await _userManager.CreateAsync(user, model.Password);
-
-        if (!result.Succeeded)
-        {
-            return BadRequest(result.Errors);
-        }
-
-        // Check if the role exists, and create it if it doesn't
-        if (!string.IsNullOrEmpty(model.Role))
-        {
-            var roleExists = await _roleManager.RoleExistsAsync(model.Role);
-            if (!roleExists)
+            // Validate the incoming request data
+            if (!ModelState.IsValid)
             {
-                await _roleManager.CreateAsync(new IdentityRole(model.Role));
+                return BadRequest(ModelState);
             }
 
-            var roleResult = await _userManager.AddToRoleAsync(user, model.Role);
-            if (!roleResult.Succeeded)
+            // Create a new User object with the provided registration data
+            var user = new User
             {
-                // Handle error if role assignment fails
-                return BadRequest(roleResult.Errors);
+                UserName = model.Username,
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                Role = model.Role,
+                Email = model.Email
+            };
+
+            // Attempt to create the user in the database
+            var result = await _userManager.CreateAsync(user, model.Password);
+
+            if (!result.Succeeded)
+            {
+                // Return bad request with error messages if user creation fails
+                return BadRequest(result.Errors);
             }
-        }
 
-        return Ok();
-    }
-
-    /// <summary>
-    /// Authenticates the user and generates a JWT token for authorization.
-    /// </summary>
-    /// <param name="model">User login data.</param>
-    /// <returns>JWT token for authorization.</returns>
-    [AllowAnonymous]
-    [HttpPost("Login")]
-    public async Task<IActionResult> Login([FromBody] UserLoginDto model)
-    {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
-
-        var user = await _userManager.FindByNameAsync(model.Username);
-        if (user == null)
-        {
-            return Unauthorized(new { message = "Invalid username or password." });
-        }
-
-        var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, lockoutOnFailure: false);
-        if (!result.Succeeded)
-        {
-            return Unauthorized(new { message = "Invalid username or password." });
-        }
-
-        var token = GenerateJwtToken(user);
-
-        // Set the authentication token as a response header
-        Response.Headers.Add("Authorization", "Bearer " + token);
-
-        return Ok(new { Token = token });
-    }
-
-    /// <summary>
-    /// Generates a JWT token for the authenticated user.
-    /// </summary>
-    /// <param name="user">The authenticated user.</param>
-    /// <returns>JWT token as a string.</returns>
-    private string GenerateJwtToken(User user)
-    {
-        var jwtSettings = _configuration.GetSection("Jwt");
-        var key = Encoding.ASCII.GetBytes(jwtSettings.GetValue<string>("Key"));
-        var issuer = jwtSettings.GetValue<string>("Issuer");
-        var audience = jwtSettings.GetValue<string>("Audience");
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(new Claim[]
+            // Check if the provided role exists, and create it if it doesn't
+            if (!string.IsNullOrEmpty(model.Role))
             {
+                var roleExists = await _roleManager.RoleExistsAsync(model.Role);
+                if (!roleExists)
+                {
+                    await _roleManager.CreateAsync(new IdentityRole(model.Role));
+                }
+
+                // Add the user to the specified role
+                var roleResult = await _userManager.AddToRoleAsync(user, model.Role);
+                if (!roleResult.Succeeded)
+                {
+                    // Return bad request with error messages if role assignment fails
+                    return BadRequest(roleResult.Errors);
+                }
+            }
+
+            // Return success if user registration is successful
+            return Ok();
+        }
+
+        // Endpoint for user login
+        [AllowAnonymous]
+        [HttpPost("Login")]
+        public async Task<IActionResult> Login([FromBody] UserLoginDto model)
+        {
+            // Validate the incoming request data
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            // Find the user by username
+            var user = await _userManager.FindByNameAsync(model.Username);
+            if (user == null)
+            {
+                // Return unauthorized if the user is not found
+                return Unauthorized(new { message = "Invalid username or password." });
+            }
+
+            // Check if the provided password is correct
+            var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, lockoutOnFailure: false);
+            if (!result.Succeeded)
+            {
+                // Return unauthorized if the password is incorrect
+                return Unauthorized(new { message = "Invalid username or password." });
+            }
+
+            // Generate a JWT token for the authenticated user
+            var token = GenerateJwtToken(user);
+
+            // Set the authentication token as a response header
+            Response.Headers.Add("Authorization", "Bearer " + token);
+
+            // Return success with the JWT token
+            return Ok(new { Token = token });
+        }
+
+        // Generate a JWT token for the authenticated user
+        private string GenerateJwtToken(User user)
+        {
+            var jwtSettings = _configuration.GetSection("Jwt");
+            var key = Encoding.ASCII.GetBytes(jwtSettings.GetValue<string>("Key"));
+            var issuer = jwtSettings.GetValue<string>("Issuer");
+            var audience = jwtSettings.GetValue<string>("Audience");
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new Claim[]
+                {
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
                 new Claim(ClaimTypes.Name, user.UserName),
                 new Claim(ClaimTypes.GivenName, user.FirstName),
                 new Claim(ClaimTypes.Surname, user.LastName),
                 new Claim(ClaimTypes.Role, user.Role)
-            }),
-            Expires = DateTime.UtcNow.AddDays(7),
-            Issuer = issuer,
-            Audience = audience,
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-        };
+                }),
+                Expires = DateTime.UtcNow.AddDays(7),
+                Issuer = issuer,
+                Audience = audience,
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
 
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        var tokenString = tokenHandler.WriteToken(token);
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var tokenString = tokenHandler.WriteToken(token);
 
-        return tokenString;
-    }
+            return tokenString;
+        }
 
-    /// <summary>
-    /// Logs out the authenticated user.
-    /// </summary>
-    /// <returns>HTTP status code indicating success or failure.</returns>
-    [HttpPost]
-    [Route("Logout")]
-    [Authorize]
-    public async Task<IActionResult> Logout()
-    {
-        await _signInManager.SignOutAsync();
+        // Endpoint for user logout
+        [HttpPost]
+        [Route("Logout")]
+        [Authorize]
+        public async Task<IActionResult> Logout()
+        {
+            // Sign out the current user
+            await _signInManager.SignOutAsync();
 
-        return Ok();
+            // Return success
+            return Ok();
+        }
     }
 }
+

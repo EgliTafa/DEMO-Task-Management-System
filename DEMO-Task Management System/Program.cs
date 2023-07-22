@@ -1,8 +1,9 @@
-using DEMO_Task_Management_System.Data;
-using DEMO_Task_Management_System.Data.Interfaces;
-using DEMO_Task_Management_System.Data.Repositories;
-using DEMO_Task_Management_System.Data.Services;
-using DEMO_Task_Management_System.Models;
+using DEMO_Task_Management_System.Application.Interfaces;
+using DEMO_Task_Management_System.Domain.Entities.Models;
+using DEMO_Task_Management_System.Domain.Interfaces;
+using DEMO_Task_Management_System.Domain.Services;
+using DEMO_Task_Management_System.Infrastructure.Data;
+using DEMO_Task_Management_System.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

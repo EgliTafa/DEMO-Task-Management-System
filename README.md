@@ -35,6 +35,6 @@ Microsoft SQL Server (Express or full version) installed and running
 - Configure the Database Connection:
 Open the appsettings.json file in the project's root directory.
 Update the DefaultConnection string with the appropriate connection details for your SQL Server instance.
-Make sure to replace placeholders such as <server>, <database>, <username>.
+Make sure to replace the values with your own.
 - Build and Run the Application.
 

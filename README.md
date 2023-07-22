@@ -27,7 +27,7 @@ The Task Management System is a web-based application designed to help teams and
 To run the Task Management System on your local machine, follow the instructions to set up the development environment, database, and application configuration.
 
 1) Prerequisites
-.NET Core SDK (version specified in the project's global.json file)
+.NET 6 SDK
 Microsoft SQL Server (Express or full version) installed and running
 
 2) Installation

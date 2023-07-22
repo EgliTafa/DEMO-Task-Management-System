@@ -1,7 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
+using DEMO_Task_Management_System.Data.Interfaces;
+using DEMO_Task_Management_System.Data.Services;
 using DEMO_Task_Management_System.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -13,24 +16,26 @@ namespace DEMO_Task_Management_System.Data
         private readonly ApplicationDbContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private UserManager<User> _userManager;
+        private IEmailService _emailService;
 
-        public TasksRepository(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, UserManager<User> userManager)
+        public TasksRepository(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, UserManager<User> userManager,IEmailService emailService)
         {
             _context = context;
             _httpContextAccessor = httpContextAccessor;
             _userManager = userManager;
+            _emailService = emailService;
         }
 
         public async Task<IEnumerable<Tasks>> GetAllTasks()
         {
             var tasks = await _context.Tasks.ToListAsync();
-            return await _context.Tasks.ToListAsync();
+            return tasks;
         }
 
         public async Task<Tasks> GetTaskById(int id)
         {
             var task = await _context.Tasks.FindAsync(id);
-            return await _context.Tasks.FindAsync(id);
+            return task;
         }
 
         public async Task<IEnumerable<Tasks>> GetTasksByCategory(string category)
@@ -48,6 +53,7 @@ namespace DEMO_Task_Management_System.Data
             //Tracks the user who created the task
             task.UserId = user.Id;
             task.User = user;
+            task.IsCompleted = false;
             await _context.Tasks.AddAsync(task);
             await _context.SaveChangesAsync();
         }
@@ -218,5 +224,45 @@ namespace DEMO_Task_Management_System.Data
 
             return tasksWithProject;
         }
+
+        public async Task<IEnumerable<Tasks>> GetTasksWithUpcomingDeadlines(TimeSpan threshold)
+        {
+            var currentDate = DateTime.Now;
+            var upcomingDate = currentDate.AddDays(threshold.Days);
+
+            var upcomingTasks = await _context.Tasks
+                .Include(task => task.User) // Eagerly load the User navigation property
+                .Where(task => task.DueDate > currentDate && task.DueDate <= upcomingDate)
+                .ToListAsync();
+
+            // Send reminder notifications for each upcoming task
+            foreach (var task in upcomingTasks)
+            {
+                var assignedUser = task.User;
+                if (assignedUser != null)
+                {
+                    await _emailService.SendTaskReminderNotificationAsync(assignedUser.Email, assignedUser.UserName, task.Id.ToString(), task.Title, task.DueDate);
+                }
+            }
+
+            return upcomingTasks;
+        }
+
+
+        //public async Task SendTaskReminderNotifications(TimeSpan threshold)
+        //{
+        //    // Get tasks with upcoming deadlines based on the threshold
+        //    var upcomingTasks = await GetTasksWithUpcomingDeadlines(threshold);
+
+        //    // Send reminder notifications for each upcoming task
+        //    foreach (var task in upcomingTasks)
+        //    {
+        //        var assignedUser = task.User;
+        //        if (assignedUser != null)
+        //        {
+        //            await _emailService.SendTaskReminderNotificationAsync(assignedUser.Email, assignedUser.UserName, task.Id.ToString(), task.Title, task.DueDate);
+        //        }
+        //    }
+        //}
     }
 }

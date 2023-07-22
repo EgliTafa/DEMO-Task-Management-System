@@ -54,6 +54,7 @@ builder.Services.AddScoped<ITasksRepository, TasksRepository>();
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddScoped<ITeamRepository, TeamRepository>();
 
+
 builder.Services.AddTransient<IEmailService, EmailService>();
 
 builder.Services.AddIdentity<User, IdentityRole>()

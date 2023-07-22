@@ -9,13 +9,18 @@ namespace DEMO_Task_Management_System.Dto
         public string Title { get; set; }
         public string Description { get; set; }
         public DateTime DueDate { get; set; }
-        public int Priority { get; set; }
         public string? Category { get; set; }
         public bool IsCompleted { get; set; }
         [JsonIgnore]
         public int? ProjectId { get; set; }
         public TaskStatusList TaskStatus { get; set; }
+        public TaskUrgency Urgency { get; set; }
+        public TaskPriority Priority { get; set; }
         [NotMapped] // This attribute tells Entity Framework not to map this property to the database.
         public string TaskStatusText => Enum.GetName(typeof(TaskStatusList), TaskStatus);
+        [NotMapped] // This attribute tells Entity Framework not to map this property to the database.
+        public string TaskPriorityText => Enum.GetName(typeof(TaskPriority), Priority);
+        [NotMapped] // This attribute tells Entity Framework not to map this property to the database.
+        public string TaskUrgencyText => Enum.GetName(typeof(TaskUrgency), Urgency);
     }
 }

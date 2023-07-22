@@ -1,12 +1,14 @@
 ﻿using DEMO_Task_Management_System.Data;
 using DEMO_Task_Management_System.Data.Interfaces;
 using DEMO_Task_Management_System.Data.Repositories;
+using DEMO_Task_Management_System.Data.Services;
 using DEMO_Task_Management_System.Dto;
 using DEMO_Task_Management_System.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace DEMO_Task_Management_System.Controllers
@@ -103,9 +105,8 @@ namespace DEMO_Task_Management_System.Controllers
             task.Priority = taskUpdateDto.Priority;
             task.IsCompleted = taskUpdateDto.IsCompleted;
             task.Category = taskUpdateDto.Category;
-
-            // Update the task status based on the provided TaskStatusEnum value
             task.TaskStatus = taskUpdateDto.TaskStatus;
+            task.Urgency = taskUpdateDto.Urgency;
 
             if (taskUpdateDto.ProjectId.HasValue)
             {
@@ -252,6 +253,22 @@ namespace DEMO_Task_Management_System.Controllers
 
             var tasks = await _tasksRepository.GetTasksByProject(projectId);
             return Ok(tasks);
+        }
+
+        [HttpPost]
+        [Route("Get-Upcoming-Tasks")]
+        public async Task<IActionResult> GetTasksWithUpcomingDeadlines(int days)
+        {
+            if (days <= 0)
+            {
+                return BadRequest("The 'days' parameter must be greater than zero.");
+            }
+
+            var threshold = new TimeSpan(days, 0, 0, 0); // Create a TimeSpan based on the specified days
+
+            var upcomingTasks = await _tasksRepository.GetTasksWithUpcomingDeadlines(threshold);
+
+            return Ok(upcomingTasks);
         }
     }
 }

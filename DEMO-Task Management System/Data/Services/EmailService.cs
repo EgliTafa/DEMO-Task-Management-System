@@ -66,5 +66,47 @@ namespace DEMO_Task_Management_System.Data.Services
                 throw new ArgumentException("Recipient email address cannot be null or empty.", nameof(recipientEmail));
             }
         }
+
+        public async Task SendTaskReminderNotificationAsync(string recipientEmail, string recipientName, string taskId, string taskTitle, DateTime dueDate)
+        {
+            var emailSettings = _configuration.GetSection("EmailSettings");
+            var smtpServer = emailSettings["SmtpServer"];
+            var port = int.Parse(emailSettings["Port"]);
+            var enableSsl = bool.Parse(emailSettings["EnableSsl"]);
+            var userName = emailSettings["UserName"];
+            var password = emailSettings["Password"];
+            var senderEmailAddress = emailSettings["SenderEmailAddress"];
+            var senderName = emailSettings["SenderName"];
+
+            if (recipientEmail != null && recipientName != null)
+            {
+                var message = new MimeMessage();
+                message.From.Add(new MailboxAddress(senderName, senderEmailAddress));
+                message.To.Add(new MailboxAddress(recipientName, recipientEmail));
+                message.Subject = "Task Reminder Notification";
+
+                var bodyBuilder = new BodyBuilder();
+                bodyBuilder.HtmlBody = $@"
+                <h3>Task Reminder Notification</h3>
+                <p>Your task with ID {taskId} is due soon:</p>
+                <p>Title: {taskTitle}</p>
+                <p>Due Date: {dueDate.ToString("yyyy-MM-dd HH:mm")}</p>
+            ";
+
+                message.Body = bodyBuilder.ToMessageBody();
+
+                using (var client = new SmtpClient())
+                {
+                    await client.ConnectAsync(smtpServer, port, SecureSocketOptions.StartTls);
+                    await client.AuthenticateAsync(userName, password);
+                    await client.SendAsync(message);
+                    await client.DisconnectAsync(true);
+                }
+            }
+            else
+            {
+                throw new ArgumentException("Recipient email address cannot be null or empty.", nameof(recipientEmail));
+            }
+        }
     }
 }

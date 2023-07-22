@@ -18,5 +18,7 @@ namespace DEMO_Task_Management_System.Data
         Task<IEnumerable<Tasks>> GetTasksByProject(int projectId);
         Task UpdateAssignTask(int taskId, List<string> usernames);
         Task<IEnumerable<TaskAssignment>> GetTasksByAssignedUsers(List<string> usernames);
+        Task<IEnumerable<Tasks>> GetTasksWithUpcomingDeadlines(TimeSpan threshold);
+
     }
 }

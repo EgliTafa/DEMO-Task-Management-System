@@ -29,6 +29,11 @@ public class AuthenticationController : ControllerBase
         _roleManager = roleManager;
     }
 
+    /// <summary>
+    /// Registers a new user.
+    /// </summary>
+    /// <param name="model">User registration data.</param>
+    /// <returns>HTTP status code indicating success or failure.</returns>
     [AllowAnonymous]
     [HttpPost("Register")]
     public async Task<IActionResult> Register([FromBody] UserRegistrationDto model)
@@ -74,8 +79,11 @@ public class AuthenticationController : ControllerBase
         return Ok();
     }
 
-
-
+    /// <summary>
+    /// Authenticates the user and generates a JWT token for authorization.
+    /// </summary>
+    /// <param name="model">User login data.</param>
+    /// <returns>JWT token for authorization.</returns>
     [AllowAnonymous]
     [HttpPost("Login")]
     public async Task<IActionResult> Login([FromBody] UserLoginDto model)
@@ -105,6 +113,11 @@ public class AuthenticationController : ControllerBase
         return Ok(new { Token = token });
     }
 
+    /// <summary>
+    /// Generates a JWT token for the authenticated user.
+    /// </summary>
+    /// <param name="user">The authenticated user.</param>
+    /// <returns>JWT token as a string.</returns>
     private string GenerateJwtToken(User user)
     {
         var jwtSettings = _configuration.GetSection("Jwt");
@@ -135,6 +148,10 @@ public class AuthenticationController : ControllerBase
         return tokenString;
     }
 
+    /// <summary>
+    /// Logs out the authenticated user.
+    /// </summary>
+    /// <returns>HTTP status code indicating success or failure.</returns>
     [HttpPost]
     [Route("Logout")]
     [Authorize]

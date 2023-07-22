@@ -18,6 +18,9 @@ namespace DEMO_Task_Management_System.Data
         private UserManager<User> _userManager;
         private IEmailService _emailService;
 
+        // Constructor for the TasksRepository class that takes an instance of the ApplicationDbContext,
+        // IHttpContextAccessor, UserManager<User>, and IEmailService as parameters. These dependencies
+        // are injected via dependency injection.
         public TasksRepository(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, UserManager<User> userManager,IEmailService emailService)
         {
             _context = context;
@@ -26,18 +29,28 @@ namespace DEMO_Task_Management_System.Data
             _emailService = emailService;
         }
 
+        // Get all tasks from the database.
+        // Returns: A list of tasks as IEnumerable<Tasks>.
         public async Task<IEnumerable<Tasks>> GetAllTasks()
         {
             var tasks = await _context.Tasks.ToListAsync();
             return tasks;
         }
 
+        // Get a specific task by its ID from the database.
+        // Parameters:
+        //   - id: The ID of the task to retrieve.
+        // Returns: The task as a Tasks object if found, otherwise null.
         public async Task<Tasks> GetTaskById(int id)
         {
             var task = await _context.Tasks.FindAsync(id);
             return task;
         }
 
+        // Get all tasks with a specific category from the database.
+        // Parameters:
+        //   - category: The category of tasks to retrieve.
+        // Returns: A list of tasks with the specified category as IEnumerable<Tasks>.
         public async Task<IEnumerable<Tasks>> GetTasksByCategory(string category)
         {
             var tasks = await _context.Tasks
@@ -47,6 +60,9 @@ namespace DEMO_Task_Management_System.Data
             return tasks;
         }
 
+        // Add a new task to the database.
+        // Parameters:
+        //   - task: The task object to be added to the database.
         public async Task AddTask(Tasks task)
         {
             var user = await _userManager.GetUserAsync(_httpContextAccessor.HttpContext.User);
@@ -58,13 +74,18 @@ namespace DEMO_Task_Management_System.Data
             await _context.SaveChangesAsync();
         }
 
-
+        // Update an existing task in the database.
+        // Parameters:
+        //   - task: The task object with updated values.
         public async Task UpdateTask(Tasks task)
         {
             _context.Tasks.Update(task);
             await _context.SaveChangesAsync();
         }
 
+        // Delete a task from the database based on its ID.
+        // Parameters:
+        //   - id: The ID of the task to be deleted.
         public async Task DeleteTask(int id)
         {
             var task = await _context.Tasks.FindAsync(id);
@@ -72,6 +93,10 @@ namespace DEMO_Task_Management_System.Data
             await _context.SaveChangesAsync();
         }
 
+        // Assign a task to a list of team members.
+        // Parameters:
+        //   - taskId: The ID of the task to be assigned.
+        //   - usernames: The list of usernames (team members) to whom the task will be assigned.
         public async Task AssignTask(int taskId, List<string> usernames)
         {
             var task = await _context.Tasks.FindAsync(taskId);
@@ -117,6 +142,10 @@ namespace DEMO_Task_Management_System.Data
             await _context.SaveChangesAsync();
         }
 
+        // Update the task assignments for a task based on a list of team members.
+        // Parameters:
+        //   - taskId: The ID of the task whose assignments are being updated.
+        //   - usernames: The updated list of usernames (team members) to whom the task will be assigned.
         public async Task UpdateAssignTask(int taskId, List<string> usernames)
         {
             var task = await _context.Tasks.FindAsync(taskId);
@@ -178,7 +207,10 @@ namespace DEMO_Task_Management_System.Data
             await _context.SaveChangesAsync();
         }
 
-
+        // Get tasks assigned to specific users (team members).
+        // Parameters:
+        //   - usernames: The list of usernames (team members) for whom the tasks are to be retrieved.
+        // Returns: A list of tasks assigned to the specified users as IEnumerable<TaskAssignment>.
         public async Task<IEnumerable<TaskAssignment>> GetTasksByAssignedUsers(List<string> usernames)
         {
             // Get the tasks assigned to the specified users
@@ -189,6 +221,11 @@ namespace DEMO_Task_Management_System.Data
             return tasks;
         }
 
+        // Search for tasks with a specific category and matching search query.
+        // Parameters:
+        //   - category: The category of tasks to search within.
+        //   - searchQuery: The search query string.
+        // Returns: A list of tasks with the specified category and matching search query as IEnumerable<Tasks>.
         public async Task<IEnumerable<Tasks>> SearchTasksByCategory(string category, string searchQuery)
         {
             var tasks = await _context.Tasks
@@ -198,7 +235,10 @@ namespace DEMO_Task_Management_System.Data
             return tasks;
         }
 
-        //Assigns tasks to projects
+        // Assign a task to a project.
+        // Parameters:
+        //   - taskId: The ID of the task to be assigned to the project.
+        //   - projectId: The ID of the project to which the task will be assigned.
         public async Task AssignTaskToProject(int taskId, int projectId)
         {
             var task = await _context.Tasks.FindAsync(taskId);
@@ -218,6 +258,10 @@ namespace DEMO_Task_Management_System.Data
             await _context.SaveChangesAsync();
         }
 
+        // Get tasks associated with a specific project.
+        // Parameters:
+        //   - projectId: The ID of the project for which tasks are to be retrieved.
+        // Returns: A list of tasks associated with the specified project as IEnumerable<Tasks>.
         public async Task<IEnumerable<Tasks>> GetTasksByProject(int projectId)
         {
             var tasksWithProject = await _context.Tasks.Where(t => t.ProjectId == projectId).ToListAsync();
@@ -225,6 +269,10 @@ namespace DEMO_Task_Management_System.Data
             return tasksWithProject;
         }
 
+        // Get tasks with upcoming deadlines within a given threshold.
+        // Parameters:
+        //   - threshold: The time span representing the threshold for upcoming tasks.
+        // Returns: A list of tasks with deadlines within the specified threshold as IEnumerable<Tasks>.
         public async Task<IEnumerable<Tasks>> GetTasksWithUpcomingDeadlines(TimeSpan threshold)
         {
             var currentDate = DateTime.Now;

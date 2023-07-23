@@ -1,6 +1,6 @@
 # DEMO-Task Management System
 
-The Task Management System is a web-based application designed to help teams and individuals manage their tasks efficiently. It provides an intuitive API for creating, updating, and tracking tasks, as well as assigning tasks to team members and projects.
+The Task Management System is a web-based application designed to help teams and individuals manage their tasks efficiently. It provides an intuitive API for creating, updating, and tracking tasks, as well as assigning tasks to team members and projects. The project has been developed with a Domain-Driven Design approach to ensure a well-structured and maintainable codebase.
 
 ## Key Features
 
